@@ -1,17 +1,1043 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="MCQ Studio — a local-first tool to compose, validate, shuffle, store and export multiple-choice questions (JSON/CSV/print)."
-    />
-    <meta name="theme-color" content="#f2efe6" />
-    <title>MCQ Studio — Multiple-Choice Question Builder</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101827" />
+  <title>MCQ Question Lab v7</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --text: #172033;
+      --muted: #68758b;
+      --border: #e3e9f1;
+      --primary: #3157d5;
+      --primary-dark: #2446b7;
+      --primary-soft: #edf2ff;
+      --green: #13845b;
+      --green-soft: #e9f8f1;
+      --red: #c74444;
+      --red-soft: #fff0f0;
+      --amber: #a66b12;
+      --amber-soft: #fff7e7;
+      --shadow: 0 12px 34px rgba(25, 42, 75, .07);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: radial-gradient(circle at 10% 0%, #eaf0ff 0, transparent 28%), var(--bg);
+      font-family: Inter, "Noto Sans Bengali", "Hind Siliguri", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+    button, textarea, input { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { max-width: 1120px; margin: 0 auto; padding: 30px 22px 64px; }
+    .hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .logo {
+      width: 48px; height: 48px; border-radius: 15px; display: grid; place-items: center;
+      background: linear-gradient(145deg, #4269ed, #253fae); color: #fff; font-size: 23px;
+      box-shadow: 0 9px 22px rgba(49, 87, 213, .25);
+    }
+    h1 { margin: 0; font-size: clamp(24px, 3vw, 32px); line-height: 1.25; letter-spacing: -.6px; }
+    .subtitle { color: var(--muted); margin: 6px 0 0; font-size: 14px; }
+    .storage-pill { white-space: nowrap; border: 1px solid #d8e3f4; background: rgba(255,255,255,.78); padding: 8px 12px; border-radius: 999px; color: #52627b; font-size: 12px; display: flex; align-items: center; gap: 7px; }
+    .hero-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; flex-wrap: wrap; }
+    .theme-toggle { white-space: nowrap; }
+    .storage-dot { width: 7px; height: 7px; border-radius: 50%; background: #18a46d; }
+    .tabbar { display: flex; gap: 8px; padding: 6px; border: 1px solid var(--border); background: rgba(255,255,255,.76); border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(25,42,75,.03); }
+    .tab-btn { flex: 1; border: 0; background: transparent; color: #68758b; padding: 11px 14px; border-radius: 11px; font-weight: 700; font-size: 14px; transition: .18s ease; }
+    .tab-btn.active { color: var(--primary); background: var(--primary-soft); }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; }
+    .panel + .panel { margin-top: 18px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 17px; }
+    .panel h2 { margin: 0; font-size: 20px; line-height: 1.4; }
+    .panel-desc { color: var(--muted); font-size: 13px; margin: 5px 0 0; }
+    .field-label { display: block; font-size: 13px; font-weight: 750; margin: 0 0 9px; }
+    textarea {
+      width: 100%; min-height: 260px; resize: vertical; border: 1px solid #dbe3ee; outline: none;
+      background: #fbfcfe; border-radius: 13px; padding: 16px; color: #243047; font-size: 13px;
+      line-height: 1.75; transition: border-color .18s, box-shadow .18s;
+    }
+    textarea:focus { border-color: #8ea6f3; box-shadow: 0 0 0 4px rgba(49,87,213,.09); background: #fff; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 15px; align-items: center; }
+    .btn { border: 1px solid transparent; border-radius: 11px; padding: 10px 15px; font-weight: 750; font-size: 13px; transition: .18s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-primary { color: #fff; background: var(--primary); box-shadow: 0 5px 12px rgba(49,87,213,.17); }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-secondary { color: #41516b; background: #fff; border-color: var(--border); }
+    .btn-secondary:hover:not(:disabled) { background: #f7f9fc; border-color: #cbd6e5; }
+    .btn-danger { color: var(--red); background: var(--red-soft); border-color: #f7dada; }
+    .btn-small { padding: 7px 10px; font-size: 12px; border-radius: 9px; }
+    .status { margin-top: 16px; border-radius: 12px; padding: 11px 13px; display: none; font-size: 13px; }
+    .status.show { display: block; }
+    .status.success { background: var(--green-soft); color: #176a4c; border: 1px solid #cceedd; }
+    .status.warning { background: var(--amber-soft); color: #815713; border: 1px solid #f1dfb7; }
+    .status.error { background: var(--red-soft); color: #963737; border: 1px solid #f5d0d0; }
+    .result-area { display: none; margin-top: 22px; }
+    .result-area.show { display: block; }
+    .result-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .converted-text { min-height: 190px; background: #fbfcff; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .result-title h3 { margin: 0; font-size: 16px; }
+    .count-chip { color: var(--primary); background: var(--primary-soft); padding: 5px 10px; border-radius: 999px; font-weight: 750; font-size: 11px; }
+    .q-index { color: var(--primary); font-size: 11px; font-weight: 800; letter-spacing: .2px; }
+    .q-text { margin: 6px 0 12px; font-weight: 750; font-size: 15px; }
+    .collection-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+    .search-box { flex: 1; min-width: 180px; max-width: 360px; border: 1px solid var(--border); padding: 9px 12px; border-radius: 10px; outline: none; font-size: 13px; }
+    .search-box:focus { border-color: #8ea6f3; box-shadow: 0 0 0 3px rgba(49,87,213,.08); }
+    .filter-select { min-width: 185px; max-width: 100%; border: 1px solid var(--border); padding: 9px 34px 9px 12px; border-radius: 10px; outline: none; background: #fff; color: var(--text); font-size: 13px; }
+    .filter-select:focus { border-color: #8ea6f3; box-shadow: 0 0 0 3px rgba(49,87,213,.08); }
+    .saved-subject { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-size: 10px; font-weight: 800; margin-right: 6px; }
+    .subject-modal { width: min(520px, 100%); }
+    .subject-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+    .subject-choice { border: 1px solid var(--border); background: #fbfcff; color: var(--text); border-radius: 11px; padding: 12px 10px; font-weight: 750; font-size: 13px; text-align: center; transition: .16s ease; }
+    .subject-choice:hover, .subject-choice:focus-visible { border-color: #8ea6f3; background: var(--primary-soft); color: var(--primary); outline: none; transform: translateY(-1px); }
+    .exam-filter-row { display: flex; flex-direction: column; align-items: center; gap: 7px; margin: 18px auto 8px; max-width: 340px; }
+    .exam-filter-row label { font-size: 13px; font-weight: 800; }
+    .exam-filter-row select { width: 100%; }
+    .exam-filter-count { color: var(--muted); font-size: 12px; }
+    .collection-list { display: grid; gap: 10px; }
+    .saved-entry { border: 1px solid var(--border); border-radius: 13px; overflow: hidden; background: #fbfcfe; }
+    .saved-item { display: flex; justify-content: space-between; gap: 14px; align-items: center; padding: 14px 15px; background: transparent; border: 0; border-radius: 0; }
+    .saved-main { display: block; flex: 1; min-width: 0; padding: 0; border: 0; text-align: left; background: transparent; color: inherit; cursor: pointer; }
+    .saved-main:hover .q-text { color: var(--primary); }
+    .saved-main:focus-visible { outline: 3px solid rgba(49,87,213,.22); outline-offset: 4px; border-radius: 6px; }
+    .saved-item .q-text { margin: 4px 0 0; font-size: 14px; font-weight: 650; }
+    .saved-meta { color: var(--muted); font-size: 11px; margin-top: 5px; }
+    .saved-detail { padding: 16px; border-top: 1px solid var(--border); background: #fff; }
+    .saved-detail-title { font-weight: 800; font-size: 14px; margin-bottom: 10px; }
+    .detail-options { display: grid; gap: 8px; }
+    .detail-option { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fbfcfe; font-size: 13px; }
+    .detail-option.correct { border-color: #8bd4b3; background: var(--green-soft); color: #176a4c; font-weight: 650; }
+    .detail-option-letter { flex: 0 0 25px; width: 25px; height: 25px; display: grid; place-items: center; border-radius: 7px; background: #eef2f7; color: #52627b; font-size: 11px; font-weight: 850; }
+    .detail-option.correct .detail-option-letter { background: #c9f0dd; color: #176a4c; }
+    .detail-answer { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--green-soft); color: #176a4c; font-size: 13px; }
+    .detail-explanation { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .detail-explanation-title { font-weight: 800; font-size: 13px; margin-bottom: 5px; }
+    .detail-explanation-text { color: #45536a; font-size: 13px; white-space: pre-wrap; }
+    .empty { text-align: center; padding: 44px 18px; color: var(--muted); border: 1px dashed #d5deea; border-radius: 14px; background: #fbfcfe; }
+    .empty-icon { font-size: 28px; margin-bottom: 7px; }
+    .exam-top { display: flex; justify-content: space-between; gap: 14px; align-items: center; margin-bottom: 16px; }
+    .progress-wrap { flex: 1; }
+    .progress-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-bottom: 7px; }
+    .progress-track { width: 100%; height: 7px; border-radius: 20px; background: #edf1f6; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, #3157d5, #6d8af0); border-radius: inherit; transition: width .25s; }
+    .exam-question { font-size: 20px; font-weight: 800; margin: 18px 0 20px; line-height: 1.6; }
+    .exam-options { display: grid; gap: 10px; }
+    .exam-option { display: flex; text-align: left; align-items: flex-start; gap: 12px; width: 100%; border: 1px solid var(--border); border-radius: 12px; background: #fff; padding: 13px 14px; color: var(--text); transition: .16s ease; }
+    .exam-option:not(:disabled):hover { border-color: #9aaff4; background: #f8faff; }
+    .option-letter { flex: 0 0 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; background: #f0f3f8; color: #5b6981; font-size: 12px; font-weight: 850; }
+    .exam-option.correct { border-color: #8bd4b3; background: var(--green-soft); color: #176a4c; }
+    .exam-option.correct .option-letter { background: #c9f0dd; color: #176a4c; }
+    .exam-option.wrong { border-color: #eea6a6; background: var(--red-soft); color: #963737; }
+    .exam-option.wrong .option-letter { background: #ffdada; color: #963737; }
+    .exam-feedback { display: none; margin-top: 17px; border-radius: 13px; padding: 15px; }
+    .exam-feedback.show { display: block; }
+    .exam-feedback.good { background: var(--green-soft); border: 1px solid #cceedd; }
+    .exam-feedback.bad { background: var(--red-soft); border: 1px solid #f5d0d0; }
+    .feedback-title { font-weight: 850; font-size: 14px; margin-bottom: 4px; }
+    .feedback-explanation { white-space: pre-wrap; color: #45536a; font-size: 13px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(80,100,130,.15); }
+    .exam-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; }
+    .exam-empty { text-align: center; padding: 40px 18px; }
+    .exam-empty h3 { margin: 7px 0 4px; }
+    .exam-empty p { color: var(--muted); font-size: 13px; margin: 0 0 17px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
+    .summary-box { padding: 15px; border: 1px solid var(--border); border-radius: 12px; background: #fbfcfe; text-align: center; }
+    .summary-number { display: block; font-size: 25px; font-weight: 850; }
+    .summary-label { display: block; font-size: 11px; color: var(--muted); }
+    .hidden { display: none !important; }
+    .footer-note { text-align: center; margin-top: 20px; font-size: 11px; color: #8a95a7; }
+    .modal-backdrop { position: fixed; inset: 0; display: none; place-items: center; padding: 20px; background: rgba(14,25,45,.48); z-index: 10; }
+    .modal-backdrop.show { display: grid; }
+    .modal { width: min(440px, 100%); background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+    .modal h3 { margin: 0 0 7px; }
+    .modal p { color: var(--muted); font-size: 13px; margin: 0 0 17px; }
+    @media (max-width: 700px) {
+      .app-shell { padding: 20px 13px 45px; }
+      .hero { flex-direction: column; gap: 13px; }
+      .storage-pill { align-self: flex-start; }
+      .hero-actions { justify-content: flex-start; width: 100%; }
+      .panel { padding: 17px; }
+      .tab-btn { font-size: 12px; padding: 10px 6px; }
+      .option-preview { grid-template-columns: 1fr; }
+      .exam-question { font-size: 17px; }
+      .summary-grid { gap: 6px; }
+      .summary-box { padding: 11px 5px; }
+      .summary-number { font-size: 21px; }
+      .saved-item { padding: 12px; }
+      .collection-toolbar { align-items: stretch; }
+      .collection-toolbar .search-box, .collection-toolbar .filter-select { max-width: none; width: 100%; }
+      .subject-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Dark theme, matching the WordWise / Synonym file's header toggle and saved preference. */
+    body.dark {
+      --bg: #0b1220;
+      --surface: #151e30;
+      --surface-2: #111a2a;
+      --text: #edf2ff;
+      --muted: #a8b4ca;
+      --border: #303c53;
+      --primary: #8077ff;
+      --primary-dark: #655ce8;
+      --primary-soft: #29254e;
+      --green: #83e5b8;
+      --green-soft: #15382e;
+      --red: #ff8795;
+      --red-soft: #3b202b;
+      --amber: #e8bc68;
+      --amber-soft: #3b3120;
+      --shadow: 0 12px 32px rgba(0,0,0,.22);
+      color-scheme: dark;
+    }
+    body.dark { background: radial-gradient(circle at 10% 0%, #192542 0, transparent 30%), var(--bg); }
+    body.dark .storage-pill { background: #ffffff12; border-color: #3b4963; color: #dbe4f6; }
+    body.dark .tabbar { background: #182236; border-color: var(--border); }
+    body.dark .tab-btn { color: #b4bfd4; }
+    body.dark .tab-btn.active { background: #29334c; color: #c4bdff; }
+    body.dark textarea,
+    body.dark .search-box,
+    body.dark .filter-select { background: #10192a; color: var(--text); border-color: #39465e; }
+    body.dark textarea:focus { background: #131e32; border-color: var(--primary); }
+    body.dark .btn-secondary { background: #202b40; color: #e6ecfa; border-color: #3b4963; }
+    body.dark .btn-secondary:hover:not(:disabled) { background: #29364e; border-color: #53627e; }
+    body.dark .btn-danger { background: #3b202b; color: #ffb2bc; border-color: #663341; }
+    body.dark .saved-entry { background: #111a2a; border-color: var(--border); }
+    body.dark .saved-detail { background: #151e30; }
+    body.dark .detail-option { background: #131d2e; border-color: #39465e; color: var(--text); }
+    body.dark .detail-option.correct { background: #15382e; color: #9bf0c7; border-color: #287a5b; }
+    body.dark .detail-option-letter { background: #29344a; color: #d6deee; }
+    body.dark .detail-option.correct .detail-option-letter { background: #16865b; color: #fff; }
+    body.dark .detail-answer { background: #15382e; color: #9bf0c7; }
+    body.dark .detail-explanation-text { color: #bdc8db; }
+    body.dark .empty { background: #111a2a; border-color: #39465e; }
+    body.dark .progress-track { background: #273248; }
+    body.dark .exam-option { background: #131d2e; color: var(--text); border-color: #39465e; }
+    body.dark .exam-option:not(:disabled):hover { background: #202844; border-color: #7970ff; }
+    body.dark .option-letter { background: #29344a; color: #d6deee; }
+    body.dark .exam-option.correct { background: #15382e; color: #9bf0c7; border-color: #287a5b; }
+    body.dark .exam-option.correct .option-letter { background: #16865b; color: #fff; }
+    body.dark .exam-option.wrong { background: #3b202b; color: #ffb1bd; border-color: #86404e; }
+    body.dark .exam-option.wrong .option-letter { background: #b8324b; color: #fff; }
+    body.dark .exam-feedback.good { background: #15382e; border-color: #287a5b; }
+    body.dark .exam-feedback.bad { background: #3b202b; border-color: #86404e; }
+    body.dark .feedback-explanation { color: #bdc8db; }
+    body.dark .summary-box { background: #111a2a; border-color: var(--border); }
+    body.dark .modal { background: #151e30; color: var(--text); border: 1px solid var(--border); }
+    body.dark .modal p { color: var(--muted); }
+    body.dark .subject-choice { background: #111a2a; border-color: #39465e; color: var(--text); }
+    body.dark .subject-choice:hover,
+    body.dark .subject-choice:focus-visible { background: #29254e; border-color: #7970ff; color: #d0cbff; }
+    body.dark .status.success { background: #15382e; color: #9bf0c7; border-color: #287a5b; }
+    body.dark .status.warning { background: #3b3120; color: #f1d18c; border-color: #6a572a; }
+    body.dark .status.error { background: #3b202b; color: #ffb1bd; border-color: #86404e; }
+    body.dark .footer-note { color: #8492aa; }
+    body.dark ::selection { background: #5146e5; color: #fff; }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <div class="brand">
+        <div class="logo">✦</div>
+        <div>
+          <h1>MCQ Question Lab</h1>
+          <p class="subtitle">প্রশ্ন পেস্ট করুন, সাজিয়ে সংরক্ষণ করুন, তারপর নিজেই পরীক্ষা দিন।</p>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn btn-secondary theme-toggle" id="theme-toggle" type="button" aria-pressed="false">🌙 Dark Mode</button>
+        <div class="storage-pill"><span class="storage-dot"></span> আপনার ব্রাউজারে সংরক্ষিত</div>
+      </div>
+    </header>
+
+    <nav class="tabbar" aria-label="প্রধান মেনু">
+      <button class="tab-btn active" data-tab="add">✦ টেক্সট ইনপুট</button>
+      <button class="tab-btn" data-tab="collection">▤ প্রশ্নসংগ্রহ <span id="collection-count">0</span></button>
+      <button class="tab-btn" data-tab="exam">◎ MCQ পরীক্ষা</button>
+    </nav>
+
+    <section id="tab-add" class="tab-content">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>প্রশ্নের টেক্সট ইনপুট দিন</h2>
+            <p class="panel-desc">একসাথে একাধিক প্রশ্ন পেস্ট করতে পারবেন। প্রতিটি প্রশ্নের অপশন, সঠিক উত্তর ও ব্যাখ্যা আলাদা করে শনাক্ত করা হবে।</p>
+          </div>
+        </div>
+        <label class="field-label" for="source-input">আপনার প্রশ্নগুলো এখানে পেস্ট করুন</label>
+        <textarea id="source-input" spellcheck="false" placeholder="উদাহরণ:&#10;Question 10&#10;Marks: −0.25&#10;Incorrect&#10;প্রোথ্রম্বিন কোনটির উপস্থিতিতে সংশ্লেষিত হয়?&#10;A&#10;Vit-D&#10;Your answer&#10;B&#10;Vit-K&#10;Correct answer&#10;C&#10;Vit-C&#10;D&#10;Vit-E&#10;Your answer: A&#10;Correct answer: B&#10;&#10;Explanation&#10;Az-197; প্রোথ্রম্বিন → Vit-K এর উপস্থিতিতে যকৃতে সংশ্লেষিত হয়।"></textarea>
+        <div class="hint">সমর্থিত ফরম্যাট: <b>Question 10</b> বা <b>**Question 10**</b> দিয়ে শুরু। অপশনের অক্ষর (A–D) ও অপশনের লেখা আলাদা লাইনে থাকলেও হবে। <b>Your answer</b>, <b>Correct answer</b>, <b>Marks</b> এবং <b>Explanation</b> আলাদা লাইনে থাকলেও শনাক্ত করা হবে। পুরোনো Markdown ফরম্যাটও সমর্থিত।</div>
+        <div class="actions">
+          <button class="btn btn-primary" id="analyze-btn">✦ টেক্সট বিশ্লেষণ করুন</button>
+          <button class="btn btn-secondary" id="clear-input-btn">ইনপুট পরিষ্কার</button>
+
+        </div>
+        <div id="analyze-status" class="status" role="status"></div>
+        <div id="analysis-results" class="result-area">
+          <div class="result-title">
+            <h3>রূপান্তরিত টেক্সট</h3>
+          </div>
+          <label class="field-label" for="converted-output">রূপান্তরিত টেক্সট · কপি করে অন্য জায়গায় ব্যবহার করুন</label>
+          <textarea id="converted-output" class="converted-text" readonly placeholder="বিশ্লেষণের পর রূপান্তরিত টেক্সট এখানে দেখাবে..."></textarea>
+          <div class="actions" style="margin-top:9px">
+            <button class="btn btn-secondary" id="copy-converted-btn">⧉ রূপান্তরিত টেক্সট কপি করুন</button>
+            <button class="btn btn-primary" id="go-collection-btn">প্রশ্নসংগ্রহ দেখুন →</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>ব্যাকআপ ও ডেটা</h2>
+            <p class="panel-desc">ব্রাউজারের ডেটা মুছে গেলে প্রশ্ন হারাতে পারেন। তাই মাঝে মাঝে JSON ব্যাকআপ ডাউনলোড করে রাখুন।</p>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:0">
+          <button class="btn btn-secondary" id="export-btn">↓ JSON ব্যাকআপ ডাউনলোড</button>
+          <button class="btn btn-secondary" id="import-btn">↑ ব্যাকআপ ইমপোর্ট</button>
+          <input type="file" id="import-file" accept=".json,application/json" class="hidden" />
+        </div>
+        <div id="backup-status" class="status" role="status"></div>
+      </div>
+    </section>
+
+    <section id="tab-collection" class="tab-content hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>আপনার প্রশ্নসংগ্রহ</h2>
+            <p class="panel-desc">এখানে বিশ্লেষণ করা সব প্রশ্ন দেখা যাবে। প্রশ্নগুলো স্বয়ংক্রিয়ভাবে এই ব্রাউজারে সেভ হয়।</p>
+          </div>
+          <span id="total-count" class="count-chip">0টি প্রশ্ন</span>
+        </div>
+        <div class="collection-toolbar">
+          <select id="collection-subject-filter" class="filter-select" aria-label="বিষয় অনুযায়ী প্রশ্ন দেখুন">
+            <option value="all">সব বিষয়</option>
+          </select>
+          <input id="search-input" class="search-box" type="search" placeholder="প্রশ্ন খুঁজুন..." />
+          <div class="actions" style="margin:0">
+            <button class="btn btn-secondary btn-small" id="collection-export-btn">ব্যাকআপ</button>
+            <button class="btn btn-danger btn-small" id="delete-all-btn">সব মুছুন</button>
+          </div>
+        </div>
+        <div id="collection-list" class="collection-list"></div>
+      </div>
+    </section>
+
+    <section id="tab-exam" class="tab-content hidden">
+      <div class="panel" id="exam-panel">
+        <div class="exam-empty" id="exam-start-screen">
+          <div class="empty-icon">◎</div>
+          <h3>আপনার MCQ পরীক্ষা প্রস্তুত</h3>
+          <p>বিষয় নির্বাচন করে সেই বিষয়ের প্রশ্ন থেকে পরীক্ষা দিন, অথবা সব বিষয় একসঙ্গে অনুশীলন করুন। যেকোনো অপশনে ক্লিক করলেই উত্তর ও ব্যাখ্যা দেখা যাবে।</p>
+          <div class="exam-filter-row">
+            <label for="exam-subject-select">কোন বিষয়ের MCQ পরীক্ষা দিতে চান?</label>
+            <select id="exam-subject-select" class="filter-select">
+              <option value="all">সব বিষয়</option>
+            </select>
+            <span id="exam-filter-count" class="exam-filter-count">0টি প্রশ্ন পাওয়া গেছে</span>
+          </div>
+          <button class="btn btn-primary" id="start-exam-btn">পরীক্ষা শুরু করুন →</button>
+        </div>
+        <div id="exam-play-screen" class="hidden">
+          <div class="exam-top">
+            <div class="progress-wrap">
+              <div class="progress-label"><span id="exam-progress-text">প্রশ্ন ১ / ১</span><span id="exam-percent">0%</span></div>
+              <div class="progress-track"><div class="progress-fill" id="exam-progress-fill"></div></div>
+            </div>
+            <button class="btn btn-secondary btn-small" id="exit-exam-btn">পরীক্ষা ছাড়ুন</button>
+          </div>
+          <div class="q-index" id="exam-q-index">QUESTION 01</div>
+          <div class="exam-question" id="exam-question-text"></div>
+          <div class="exam-options" id="exam-options"></div>
+          <div id="exam-feedback" class="exam-feedback" aria-live="polite"></div>
+          <div class="exam-footer">
+            <span id="exam-score-live" class="saved-meta">সঠিক: 0 · ভুল: 0</span>
+            <button class="btn btn-primary" id="next-question-btn" disabled>পরের প্রশ্ন →</button>
+          </div>
+        </div>
+        <div id="exam-finish-screen" class="hidden">
+          <div class="exam-empty">
+            <div class="empty-icon">🏁</div>
+            <h3>পরীক্ষা সম্পন্ন!</h3>
+            <p>আপনার ফলাফল নিচে দেওয়া হলো।</p>
+            <div class="summary-grid">
+              <div class="summary-box"><span class="summary-number" id="final-total">0</span><span class="summary-label">মোট প্রশ্ন</span></div>
+              <div class="summary-box"><span class="summary-number" id="final-correct" style="color:var(--green)">0</span><span class="summary-label">সঠিক</span></div>
+              <div class="summary-box"><span class="summary-number" id="final-wrong" style="color:var(--red)">0</span><span class="summary-label">ভুল</span></div>
+            </div>
+            <p id="final-percentage"></p>
+            <button class="btn btn-primary" id="restart-exam-btn">আবার পরীক্ষা দিন ↻</button>
+            <button class="btn btn-secondary" id="back-to-collection-btn">প্রশ্নসংগ্রহে ফিরুন</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer-note">MCQ Question Lab v6 · ব্যক্তিগত ব্যবহারের জন্য · ডেটা এই ব্রাউজারেই থাকে</p>
+  </main>
+
+  <div class="modal-backdrop" id="subject-modal" role="dialog" aria-modal="true" aria-labelledby="subject-modal-title">
+    <div class="modal subject-modal">
+      <h3 id="subject-modal-title">প্রশ্নগুলোর বিষয় নির্বাচন করুন</h3>
+      <p id="subject-modal-description">একটি বিষয় নির্বাচন করুন। ব্যাচের সব প্রশ্ন সেই বিষয় অনুযায়ী প্রশ্নসংগ্রহে সংরক্ষিত হবে।</p>
+      <div class="subject-grid" id="subject-choice-list"></div>
+      <div class="hint" style="margin-top:13px">সংরক্ষণের আগে একটি বিষয় নির্বাচন করা আবশ্যক।</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <h3 id="modal-title">সব প্রশ্ন মুছে ফেলবেন?</h3>
+      <p>এই কাজটি করলে এই ব্রাউজারে সংরক্ষিত সব প্রশ্ন মুছে যাবে। আগে ব্যাকআপ নিয়ে রাখুন।</p>
+      <div class="actions" style="justify-content:flex-end">
+        <button class="btn btn-secondary" id="cancel-delete-btn">বাতিল</button>
+        <button class="btn btn-danger" id="confirm-delete-btn">হ্যাঁ, সব মুছুন</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+  const STORAGE_KEY = 'mcqQuestionLab.questions.v1';
+  const SUBJECTS = ['Botany', 'Zoology', 'Physics 1st', 'Physics 2nd', 'Chemistry 1st', 'Chemistry 2nd', 'Gk', 'English'];
+  const SUBJECT_UNASSIGNED = 'বিষয় নির্ধারিত নয়';
+  const $ = (id) => document.getElementById(id);
+  let questions = loadQuestions();
+  let pendingBatch = null;
+  let pendingErrors = [];
+  let exam = { items: [], index: 0, correct: 0, wrong: 0, answered: false };
+
+  function loadQuestions() {
+    try {
+      const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      return Array.isArray(value) ? value.filter(isValidQuestion).map(q => ({
+        ...q,
+        subject: typeof q.subject === 'string' && q.subject.trim() ? q.subject : SUBJECT_UNASSIGNED
+      })) : [];
+    } catch (error) {
+      console.warn('Could not load saved questions:', error);
+      return [];
+    }
+  }
+  function isValidQuestion(q) {
+    return q && typeof q.question === 'string' && Array.isArray(q.options) &&
+      q.options.length >= 2 && /^[A-D]$/.test(String(q.correct || ''));
+  }
+  function saveQuestions() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
+      updateCounts();
+      return true;
+    } catch (error) {
+      updateCounts();
+      showStatus('analyze-status', 'ব্রাউজারের স্টোরেজ পূর্ণ বা বন্ধ। প্রশ্নগুলো এই সেশনে দেখা যাবে, তবে স্থায়ীভাবে সেভ হয়নি। JSON ব্যাকআপ নিয়ে রাখুন।', 'error');
+      return false;
+    }
+  }
+  function getSubjectCounts() {
+    const counts = new Map();
+    questions.forEach(q => {
+      const subject = q.subject || SUBJECT_UNASSIGNED;
+      counts.set(subject, (counts.get(subject) || 0) + 1);
+    });
+    return counts;
+  }
+  function populateSubjectSelect(id) {
+    const select = $(id);
+    if (!select) return;
+    const current = select.value || 'all';
+    const counts = getSubjectCounts();
+    const allCount = questions.length;
+    const options = [`<option value="all">সব বিষয় (${allCount})</option>`];
+    SUBJECTS.forEach(subject => {
+      options.push(`<option value="${escapeHTML(subject)}">${escapeHTML(subject)} (${counts.get(subject) || 0})</option>`);
+    });
+    if (counts.has(SUBJECT_UNASSIGNED)) {
+      options.push(`<option value="${escapeHTML(SUBJECT_UNASSIGNED)}">${escapeHTML(SUBJECT_UNASSIGNED)} (${counts.get(SUBJECT_UNASSIGNED)})</option>`);
+    }
+    // Preserve imported/custom subject labels instead of hiding those questions.
+    for (const [subject, count] of counts.entries()) {
+      if (!SUBJECTS.includes(subject) && subject !== SUBJECT_UNASSIGNED) {
+        options.push(`<option value="${escapeHTML(subject)}">${escapeHTML(subject)} (${count})</option>`);
+      }
+    }
+    select.innerHTML = options.join('');
+    if ([...select.options].some(option => option.value === current)) select.value = current;
+    else select.value = 'all';
+  }
+  function refreshSubjectSelects() {
+    populateSubjectSelect('collection-subject-filter');
+    populateSubjectSelect('exam-subject-select');
+    updateExamAvailableCount();
+  }
+  function selectedExamPool() {
+    const selected = $('exam-subject-select')?.value || 'all';
+    return selected === 'all' ? questions : questions.filter(q => (q.subject || SUBJECT_UNASSIGNED) === selected);
+  }
+  function updateExamAvailableCount() {
+    const count = selectedExamPool().length;
+    if ($('exam-total-available')) $('exam-total-available').textContent = count;
+    if ($('exam-filter-count')) $('exam-filter-count').textContent = `${count}টি প্রশ্ন পাওয়া গেছে`;
+    if ($('start-exam-btn')) $('start-exam-btn').disabled = count === 0;
+  }
+  function openSubjectModal(items, errors) {
+    pendingBatch = items;
+    pendingErrors = errors || [];
+    $('subject-modal-description').textContent = `${items.length}টি প্রশ্ন শনাক্ত হয়েছে${pendingErrors.length ? `; ${pendingErrors.length}টি ব্লকে সমস্যা পাওয়া গেছে` : ''}। একটি বিষয় নির্বাচন করুন—সব শনাক্ত প্রশ্ন সেই বিষয় অনুযায়ী সংরক্ষিত হবে।`;
+    $('subject-choice-list').innerHTML = SUBJECTS.map(subject =>
+      `<button type="button" class="subject-choice" data-subject="${escapeHTML(subject)}">${escapeHTML(subject)}</button>`
+    ).join('');
+    $('subject-modal').classList.add('show');
+    $('subject-choice-list').querySelectorAll('[data-subject]').forEach(button => {
+      button.addEventListener('click', () => savePendingBatch(button.dataset.subject));
+    });
+  }
+  function savePendingBatch(subject) {
+    if (!pendingBatch || !SUBJECTS.includes(subject)) return;
+    const categorized = pendingBatch.map(q => ({ ...q, subject }));
+    const seen = new Set(questions.map(q => `${q.subject || SUBJECT_UNASSIGNED}|${q.question.toLowerCase()}|${q.correct}`));
+    const newItems = [];
+    categorized.forEach(q => {
+      const key = `${subject}|${q.question.toLowerCase()}|${q.correct}`;
+      if (!seen.has(key)) { newItems.push(q); seen.add(key); }
+    });
+    questions = [...questions, ...newItems];
+    const saved = saveQuestions();
+    renderConvertedText(categorized);
+    $('subject-modal').classList.remove('show');
+    pendingBatch = null;
+    const errors = pendingErrors;
+    pendingErrors = [];
+    if (!saved) {
+      showStatus('analyze-status', `${categorized.length}টি প্রশ্ন বিশ্লেষণ করা হয়েছে, কিন্তু ব্রাউজারে সংরক্ষণ করা যায়নি। রূপান্তরিত টেক্সট কপি করে ব্যাকআপ রাখুন।`, 'error');
+    } else if (errors.length) {
+      showStatus('analyze-status', `${subject} বিষয়ে ${newItems.length}টি নতুন প্রশ্ন সংরক্ষিত হয়েছে। ${errors.length}টি ব্লক বাদ গেছে: ${errors.join(' ')}`, 'warning');
+    } else if (newItems.length < categorized.length) {
+      showStatus('analyze-status', `${subject} বিষয়ে ${newItems.length}টি নতুন প্রশ্ন সংরক্ষিত হয়েছে। ${categorized.length - newItems.length}টি একই বিষয়ের ডুপ্লিকেট প্রশ্ন যোগ করা হয়নি।`, 'success');
+    } else {
+      showStatus('analyze-status', `${subject} বিষয়ে ${newItems.length}টি প্রশ্ন প্রশ্নসংগ্রহে সংরক্ষণ করা হয়েছে।`, 'success');
+    }
+  }
+
+  function decodeEntities(text) {
+    const el = document.createElement('textarea');
+    el.innerHTML = text;
+    return el.value;
+  }
+  function cleanMarkdown(text) {
+    return String(text || '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&#x20;/gi, ' ')
+      .replace(/&#160;/gi, ' ')
+      .replace(/\*\*/g, '')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/\r/g, '')
+      .trim();
+  }
+  function normalizeInput(text) {
+    return decodeEntities(String(text || ''))
+      .replace(/\r/g, '')
+      .replace(/\u00a0/g, ' ')
+      .replace(/\t/g, ' ');
+  }
+  function splitQuestionBlocks(text) {
+    // Accept both bold and plain headers, e.g. "**Question 10**" and "Question 10".
+    // A numbered prefix such as "1. **Question 10**" is optional.
+    const marker = /^\s*(?:\d+\s*[.)]\s*)?(?:\*\*\s*)?Question\s*#?\s*\d+(?:\s*\*\*)?[^\n]*$/gim;
+    const matches = [...text.matchAll(marker)];
+    if (matches.length) {
+      return matches.map((m, i) => text.slice(m.index, i + 1 < matches.length ? matches[i + 1].index : text.length).trim()).filter(Boolean);
+    }
+    // Also accept already-clean question batches separated by Markdown H3 headings.
+    const headingPattern = /^\s*###\s+.+$/gm;
+    const headings = [...text.matchAll(headingPattern)];
+    if (headings.length > 1) {
+      const prefix = text.slice(0, headings[0].index).trim();
+      const blocks = headings.map((m, i) => text.slice(m.index, i + 1 < headings.length ? headings[i + 1].index : text.length).trim());
+      if (prefix) blocks[0] = prefix + '\n' + blocks[0];
+      return blocks;
+    }
+    return text.trim() ? [text.trim()] : [];
+  }
+  function cleanBrokenCharacterLines(rawLines) {
+    const source = (Array.isArray(rawLines) ? rawLines : String(rawLines || '').split('\n'))
+      .map(line => cleanMarkdown(line).trim())
+      .filter(Boolean);
+    const items = [];
+    for (let i = 0; i < source.length;) {
+      if (/^[A-Za-z]$/.test(source[i])) {
+        const chars = [];
+        let j = i;
+        while (j < source.length && /^[A-Za-z]$/.test(source[j])) {
+          chars.push(source[j]);
+          j++;
+        }
+        if (chars.length >= 2) {
+          items.push({ text: chars.join(''), broken: true });
+          i = j;
+          continue;
+        }
+      }
+      // Punctuation placed on its own line commonly separates two OCR-split words.
+      if (/^[,.;:!?]$/.test(source[i]) && items.length && items[items.length - 1].broken) {
+        items[items.length - 1].text += source[i];
+      } else {
+        items.push({ text: source[i], broken: false });
+      }
+      i++;
+    }
+
+    // These exports often contain both a character-per-line OCR version and
+    // the normal word/paragraph immediately afterwards. Prefer the clean copy.
+    const compactLatin = value => String(value || '').toLowerCase().replace(/[^a-z]/g, '');
+    const looksLikeDuplicateOCR = (brokenText, cleanText) => {
+      const a = compactLatin(brokenText);
+      const b = compactLatin(cleanText);
+      if (!a || !b) return false;
+      if (a.includes(b) || b.includes(a)) return true;
+      let prefix = 0;
+      while (prefix < a.length && prefix < b.length && a[prefix] === b[prefix]) prefix++;
+      // OCR sometimes inserts/drops one letter in the spaced copy (e.g. a
+      // broken "Microsporium" followed by the clean "Microsporum").
+      return Math.min(a.length, b.length) >= 8 && prefix >= Math.max(6, Math.ceil(Math.min(a.length, b.length) * 0.72));
+    };
+    const kept = items.filter((item, index) => {
+      if (!item.broken) return true;
+      const followingCleanItems = items.slice(index + 1, index + 7).filter(next => !next.broken);
+      return !followingCleanItems.some(next => looksLikeDuplicateOCR(item.text, next.text));
+    });
+    return kept.map(item => item.text).join(' ')
+      .replace(/\s+([,.;:!?])/g, '$1')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function parseOneBlock(block, index) {
+    const lines = block.split('\n');
+    let question = '';
+    let questionLine = -1;
+    const headingIndex = lines.findIndex(line => /^\s*#{2,4}\s+/.test(line));
+    if (headingIndex >= 0) {
+      question = cleanMarkdown(lines[headingIndex].replace(/^\s*#{2,4}\s+/, ''));
+      questionLine = headingIndex;
+    } else {
+      const candidate = lines.findIndex(line => {
+        const s = cleanMarkdown(line);
+        return s && !/^question\s*#?\s*\d+/i.test(s) && !/^marks\b/i.test(s) &&
+          !/^(?:incorrect|correct|skipped)$/i.test(s) &&
+          !/^(?:your\s+answer|correct\s+answer)\b/i.test(s) &&
+          !/^explanation\b/i.test(s) && !/^\*?\*?[A-D]\*?\*?\s*[.):]?$/i.test(s) &&
+          !/^\d+\s*[.)]\s*\*?\*?[A-D]\*?\*?/i.test(s);
+      });
+      if (candidate >= 0) { question = cleanMarkdown(lines[candidate].replace(/^\s*\d+\s*[.)]\s*/, '')); questionLine = candidate; }
+    }
+    if (!question) return { error: `প্রশ্ন ${index + 1}: প্রশ্নের শিরোনাম পাওয়া যায়নি।` };
+
+    const options = [];
+    const optionEnd = lines.findIndex((line, i) => i > questionLine && /^\s*\*{0,2}\s*Explanation\s*\*{0,2}\s*$/i.test(line));
+    const scanEnd = optionEnd >= 0 ? optionEnd : lines.length;
+    const optionRegex = /^\s*(?:\d+\s*[.)]\s*)?(?:\*\*\s*)?([A-D])(?:\s*\.\s*|\*\*\s*|\s+)(.*)$/i;
+    // Option labels exported on their own line are uppercase A, B, C, D.
+    // Requiring the next expected label prevents a capital letter at the start
+    // of a vertically-split English word (e.g. A\ns\np...) from becoming an option.
+    const standaloneOptionRegex = /^\s*\*{0,2}([A-D])\*{0,2}\s*[.):]?\s*$/;
+    const metadataOnly = /^(?:your\s+answer|correct\s+answer|incorrect|correct|skipped|marks|question\s*#?\s*\d+|explanation)\b/i;
+    const addOption = (letter, rawValue) => {
+      let value = String(rawValue || '');
+      value = value.replace(/\*{0,2}\s*(?:Your\s+answer|Correct\s+answer)\s*\*{0,2}/gi, '');
+      value = value.replace(/\b(?:Your\s+answer|Correct\s+answer)\b/gi, '');
+      value = cleanBrokenCharacterLines(value.split('\n'));
+      value = cleanMarkdown(value.replace(/^\*+|\*+$/g, ''));
+      if (value && !options.some(o => o.letter === letter)) options.push({ letter, text: value });
+    };
+
+    let expectedLetterIndex = 0;
+    const expectedLetters = ['A', 'B', 'C', 'D'];
+    let activeLetter = '';
+    let activeParts = [];
+    const flushActiveOption = () => {
+      if (activeLetter) addOption(activeLetter, activeParts.join('\n'));
+      activeLetter = '';
+      activeParts = [];
+    };
+
+    for (let i = Math.max(0, questionLine + 1); i < scanEnd; i++) {
+      const line = lines[i];
+      const trimmed = cleanMarkdown(line);
+      if (!trimmed) continue;
+      if (/^\s*\*{0,2}\s*Explanation\s*\*{0,2}\s*$/i.test(line)) break;
+
+      const isolated = line.match(standaloneOptionRegex);
+      const nextNonEmpty = (() => {
+        for (let k = i + 1; k < scanEnd; k++) {
+          const candidate = cleanMarkdown(lines[k]);
+          if (candidate) return candidate;
+        }
+        return '';
+      })();
+      const isBrokenWordContinuation = /^[a-z]$/.test(nextNonEmpty);
+      if (isolated && isolated[1] === expectedLetters[expectedLetterIndex] && !isBrokenWordContinuation) {
+        flushActiveOption();
+        activeLetter = isolated[1];
+        expectedLetterIndex++;
+        continue;
+      }
+
+      const inline = line.match(optionRegex);
+      if (inline && inline[1].toUpperCase() === expectedLetters[expectedLetterIndex]) {
+        flushActiveOption();
+        addOption(inline[1].toUpperCase(), inline[2]);
+        expectedLetterIndex++;
+        continue;
+      }
+
+      // Labels such as "Your answer", "Correct answer", and "Marks: 0"
+      // are metadata, not part of the option's text. Keep scanning after them.
+      if (metadataOnly.test(trimmed) || /^your\s+answer\s*:/i.test(trimmed) || /^correct\s+answer\s*:/i.test(trimmed)) continue;
+      if (activeLetter) activeParts.push(line);
+    }
+    flushActiveOption();
+    options.sort((a, b) => a.letter.localeCompare(b.letter));
+    if (options.length < 2) return { error: `প্রশ্ন ${index + 1}: অন্তত ২টি অপশন শনাক্ত করা যায়নি।` };
+
+    let correct = '';
+    const explicit = block.match(/Correct\s*answer\s*:\s*\*{0,2}\s*([A-D])\b/i) || block.match(/সঠিক\s*উত্তর\s*:\s*\*{0,2}\s*([A-D])\b/i);
+    if (explicit) correct = explicit[1].toUpperCase();
+    if (!correct) {
+      const marked = block.match(/^\s*(?:\d+\s*[.)]\s*)?\*\*\s*([A-D])\s*\*\*.*?\*\*\s*Correct\s+answer\s*\*\*/im);
+      if (marked) correct = marked[1].toUpperCase();
+    }
+    if (!correct) return { error: `প্রশ্ন ${index + 1}: Correct answer: A/B/C/D পাওয়া যায়নি।` };
+    if (!options.some(o => o.letter === correct)) return { error: `প্রশ্ন ${index + 1}: সঠিক উত্তর ${correct}, কিন্তু ওই অপশনটি পাওয়া যায়নি।` };
+
+    const explanationMatch = block.match(/\*{0,2}\s*Explanation\s*\*{0,2}\s*\n?([\s\S]*)/i) || block.match(/ব্যাখ্যা\s*:?\s*\n?([\s\S]*)/i);
+    let explanation = explanationMatch ? explanationMatch[1] : '';
+    explanation = explanation
+      .replace(/^\s*Your\s+answer\s*:[^\n]*$/gim, '')
+      .replace(/^\s*Correct\s+answer\s*:[^\n]*$/gim, '')
+      .trim();
+    explanation = cleanBrokenCharacterLines(explanation.split('\n'));
+    explanation = cleanMarkdown(explanation);
+
+    return {
+      id: createId(),
+      question,
+      options,
+      correct,
+      explanation,
+      createdAt: new Date().toISOString()
+    };
+  }
+  function parseBatch(raw) {
+    const normalized = normalizeInput(raw).trim();
+    if (!normalized) return { parsed: [], errors: ['আগে প্রশ্নের টেক্সট পেস্ট করুন।'] };
+    const blocks = splitQuestionBlocks(normalized);
+    const parsed = [], errors = [];
+    blocks.forEach((block, i) => {
+      const result = parseOneBlock(block, i);
+      if (result.error) errors.push(result.error);
+      else parsed.push(result);
+    });
+    return { parsed, errors, total: blocks.length };
+  }
+  function createId() {
+    return 'q_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  }
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+  }
+  function showStatus(id, message, type = 'success') {
+    const el = $(id);
+    el.textContent = message;
+    el.className = `status show ${type}`;
+  }
+  function hideStatus(id) { $(id).className = 'status'; }
+  function updateCounts() {
+    $('collection-count').textContent = questions.length;
+    $('total-count').textContent = `${questions.length}টি প্রশ্ন`;
+    refreshSubjectSelects();
+  }
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    $(`tab-${tab}`).classList.remove('hidden');
+    if (tab === 'collection') renderCollection();
+    if (tab === 'exam') resetExamStart();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+
+  function formatConvertedText(items) {
+    return items.map(q => {
+      const optionText = q.options.map(o => `**${o.letter}.** ${o.text}`).join('\n\n');
+      return `### ${q.question}\n\n${optionText}\n\nCorrect answer: **${q.correct}**\n\n**Explanation**\n\n${q.explanation || ''}`;
+    }).join('\n\n---\n\n');
+  }
+  function renderConvertedText(items) {
+    $('converted-output').value = formatConvertedText(items);
+    $('analysis-results').classList.add('show');
+  }
+  function clearConvertedText() {
+    $('converted-output').value = '';
+    $('analysis-results').classList.remove('show');
+  }
+  // ইনপুটে নতুন কিছু লিখলে আগের রূপান্তরিত ফলাফল আর দেখানো হবে না।
+  $('source-input').addEventListener('input', () => {
+    clearConvertedText();
+    hideStatus('analyze-status');
+  });
+  $('copy-converted-btn').addEventListener('click', async () => {
+    const output = $('converted-output');
+    try {
+      await navigator.clipboard.writeText(output.value);
+      showStatus('analyze-status', 'রূপান্তরিত টেক্সট ক্লিপবোর্ডে কপি হয়েছে।', 'success');
+    } catch (error) {
+      output.focus(); output.select();
+      const copied = document.execCommand('copy');
+      showStatus('analyze-status', copied ? 'রূপান্তরিত টেক্সট কপি হয়েছে।' : 'টেক্সটটি সিলেক্ট করা হয়েছে—Ctrl+C চাপুন।', copied ? 'success' : 'warning');
+    }
+  });
+  $('analyze-btn').addEventListener('click', () => {
+    hideStatus('analyze-status');
+    const result = parseBatch($('source-input').value);
+    if (!result.parsed.length) {
+      showStatus('analyze-status', result.errors.join(' '), 'error');
+      clearConvertedText();
+      return;
+    }
+    // Saving is deliberately deferred until a subject is selected in the popup.
+    openSubjectModal(result.parsed, result.errors);
+  });
+  $('clear-input-btn').addEventListener('click', () => {
+    $('source-input').value = '';
+    clearConvertedText();
+    hideStatus('analyze-status');
+    $('source-input').focus();
+  });
+  $('go-collection-btn').addEventListener('click', () => switchTab('collection'));
+
+  function renderCollection() {
+    updateCounts();
+    const query = $('search-input').value.trim().toLowerCase();
+    const subjectFilter = $('collection-subject-filter').value || 'all';
+    const filtered = questions.filter(q => {
+      const matchesSubject = subjectFilter === 'all' || (q.subject || SUBJECT_UNASSIGNED) === subjectFilter;
+      const matchesQuery = q.question.toLowerCase().includes(query) || q.options.some(o => o.text.toLowerCase().includes(query)) || (q.explanation || '').toLowerCase().includes(query) || (q.subject || SUBJECT_UNASSIGNED).toLowerCase().includes(query);
+      return matchesSubject && matchesQuery;
+    });
+    if (!filtered.length) {
+      $('collection-list').innerHTML = `<div class="empty"><div class="empty-icon">${questions.length ? '⌕' : '▤'}</div><b>${questions.length ? 'কোনো প্রশ্ন পাওয়া যায়নি' : 'এখনো কোনো প্রশ্ন সংরক্ষণ করা হয়নি'}</b><div style="font-size:12px;margin-top:5px">${questions.length ? 'অন্য শব্দ দিয়ে খুঁজে দেখুন।' : 'টেক্সট ইনপুট ট্যাব থেকে আপনার MCQ পেস্ট করুন।'}</div></div>`;
+      return;
+    }
+    $('collection-list').innerHTML = filtered.map((q, i) => {
+      const detailId = `saved-detail-${i}`;
+      const correctOption = q.options.find(o => o.letter === q.correct);
+      return `
+      <article class="saved-entry">
+        <div class="saved-item">
+          <button class="saved-main" type="button" data-toggle-detail="${i}" aria-expanded="false" aria-controls="${detailId}">
+            <div class="q-index"><span class="saved-subject">${escapeHTML(q.subject || SUBJECT_UNASSIGNED)}</span>প্রশ্ন ${i + 1} · সঠিক উত্তর ${escapeHTML(q.correct)}</div>
+            <div class="q-text">${escapeHTML(q.question)}</div>
+            <div class="saved-meta">${q.options.length}টি অপশন · ${q.explanation ? 'ব্যাখ্যা আছে' : 'ব্যাখ্যা নেই'} · বিস্তারিত দেখতে ক্লিক করুন</div>
+          </button>
+          <button class="btn btn-danger btn-small" data-delete-id="${escapeHTML(q.id || '')}" aria-label="প্রশ্ন মুছুন">মুছুন</button>
+        </div>
+        <div class="saved-detail hidden" id="${detailId}">
+          <div class="saved-detail-title">${escapeHTML(q.question)}</div>
+          <div class="detail-options">
+            ${q.options.map(o => `
+              <div class="detail-option ${o.letter === q.correct ? 'correct' : ''}">
+                <span class="detail-option-letter">${escapeHTML(o.letter)}</span>
+                <span>${escapeHTML(o.text)}</span>
+                ${o.letter === q.correct ? '<span style="margin-left:auto;font-size:11px;font-weight:800">সঠিক উত্তর</span>' : ''}
+              </div>`).join('')}
+          </div>
+          <div class="detail-answer">সঠিক উত্তর: <b>${escapeHTML(q.correct)}</b>${correctOption ? ` — ${escapeHTML(correctOption.text)}` : ''}</div>
+          <div class="detail-explanation">
+            <div class="detail-explanation-title">ব্যাখ্যা</div>
+            <div class="detail-explanation-text">${escapeHTML(q.explanation || 'এই প্রশ্নের জন্য কোনো ব্যাখ্যা সংরক্ষিত নেই।')}</div>
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+
+    $('collection-list').querySelectorAll('[data-toggle-detail]').forEach(btn => btn.addEventListener('click', () => {
+      const detail = $(btn.getAttribute('aria-controls'));
+      if (!detail) return;
+      const willOpen = detail.classList.contains('hidden');
+      detail.classList.toggle('hidden', !willOpen);
+      btn.setAttribute('aria-expanded', String(willOpen));
+      const meta = btn.querySelector('.saved-meta');
+      if (meta) meta.textContent = meta.textContent.replace(/ · (বিস্তারিত দেখতে ক্লিক করুন|বিস্তারিত বন্ধ করুন)$/, willOpen ? ' · বিস্তারিত বন্ধ করুন' : ' · বিস্তারিত দেখতে ক্লিক করুন');
+    }));
+    $('collection-list').querySelectorAll('[data-delete-id]').forEach(btn => btn.addEventListener('click', () => {
+      const q = questions.find(item => item.id === btn.dataset.deleteId);
+      if (!q) return;
+      if (confirm(`এই প্রশ্নটি মুছে ফেলবেন?\n\n${q.question}`)) {
+        questions = questions.filter(item => item.id !== q.id);
+        saveQuestions(); renderCollection();
+      }
+    }));
+  }
+  $('search-input').addEventListener('input', renderCollection);
+  $('collection-subject-filter').addEventListener('change', renderCollection);
+  $('exam-subject-select').addEventListener('change', updateExamAvailableCount);
+
+  function resetExamStart() {
+    $('exam-start-screen').classList.remove('hidden');
+    $('exam-play-screen').classList.add('hidden');
+    $('exam-finish-screen').classList.add('hidden');
+    updateExamAvailableCount();
+  }
+  $('start-exam-btn').addEventListener('click', startExam);
+  function startExam() {
+    const pool = selectedExamPool();
+    if (!pool.length) { alert('নির্বাচিত বিষয়ে কোনো প্রশ্ন নেই। অন্য বিষয় নির্বাচন করুন অথবা সব বিষয় বেছে নিন।'); return; }
+    exam = { items: [...pool].sort(() => Math.random() - 0.5), index: 0, correct: 0, wrong: 0, answered: false };
+    $('exam-start-screen').classList.add('hidden');
+    $('exam-finish-screen').classList.add('hidden');
+    $('exam-play-screen').classList.remove('hidden');
+    renderExamQuestion();
+  }
+  function renderExamQuestion() {
+    const q = exam.items[exam.index];
+    exam.answered = false;
+    const number = exam.index + 1;
+    const percent = Math.round((exam.index / exam.items.length) * 100);
+    $('exam-progress-text').textContent = `প্রশ্ন ${number} / ${exam.items.length}`;
+    $('exam-percent').textContent = `${percent}%`;
+    $('exam-progress-fill').style.width = `${percent}%`;
+    $('exam-q-index').textContent = `QUESTION ${String(number).padStart(2, '0')}`;
+    $('exam-question-text').textContent = q.question;
+    $('exam-options').innerHTML = q.options.map(o => `
+      <button class="exam-option" data-letter="${escapeHTML(o.letter)}">
+        <span class="option-letter">${escapeHTML(o.letter)}</span><span>${escapeHTML(o.text)}</span>
+      </button>`).join('');
+    $('exam-options').querySelectorAll('.exam-option').forEach(btn => btn.addEventListener('click', () => chooseAnswer(btn.dataset.letter)));
+    $('exam-feedback').className = 'exam-feedback';
+    $('exam-feedback').innerHTML = '';
+    $('next-question-btn').disabled = true;
+    $('next-question-btn').textContent = number === exam.items.length ? 'ফলাফল দেখুন →' : 'পরের প্রশ্ন →';
+    updateLiveScore();
+  }
+  function chooseAnswer(letter) {
+    if (exam.answered) return;
+    exam.answered = true;
+    const q = exam.items[exam.index];
+    const isCorrect = letter === q.correct;
+    if (isCorrect) exam.correct++; else exam.wrong++;
+    $('exam-options').querySelectorAll('.exam-option').forEach(btn => {
+      btn.disabled = true;
+      if (btn.dataset.letter === q.correct) btn.classList.add('correct');
+      else if (btn.dataset.letter === letter) btn.classList.add('wrong');
+    });
+    const feedback = $('exam-feedback');
+    feedback.className = `exam-feedback show ${isCorrect ? 'good' : 'bad'}`;
+    feedback.innerHTML = `<div class="feedback-title">${isCorrect ? '✓ সঠিক উত্তর!' : '✕ ভুল উত্তর'}</div>
+      <div style="font-size:13px">সঠিক উত্তর: <b>${escapeHTML(q.correct)}</b>${!isCorrect ? ` · আপনার উত্তর: <b>${escapeHTML(letter)}</b>` : ''}</div>
+      ${q.explanation ? `<div class="feedback-explanation"><b>ব্যাখ্যা</b>\n${escapeHTML(q.explanation)}</div>` : '<div class="feedback-explanation">এই প্রশ্নের জন্য কোনো ব্যাখ্যা সংরক্ষিত নেই।</div>'}`;
+    $('next-question-btn').disabled = false;
+    updateLiveScore();
+  }
+  function updateLiveScore() { $('exam-score-live').textContent = `সঠিক: ${exam.correct} · ভুল: ${exam.wrong}`; }
+  $('next-question-btn').addEventListener('click', () => {
+    if (!exam.answered) return;
+    if (exam.index + 1 < exam.items.length) { exam.index++; renderExamQuestion(); }
+    else finishExam();
+  });
+  function finishExam() {
+    $('exam-play-screen').classList.add('hidden');
+    $('exam-finish-screen').classList.remove('hidden');
+    const total = exam.items.length;
+    $('final-total').textContent = total;
+    $('final-correct').textContent = exam.correct;
+    $('final-wrong').textContent = exam.wrong;
+    $('final-percentage').textContent = `আপনার সাফল্যের হার: ${Math.round((exam.correct / total) * 100)}%`;
+    $('exam-progress-fill').style.width = '100%';
+  }
+  $('restart-exam-btn').addEventListener('click', startExam);
+  $('exit-exam-btn').addEventListener('click', () => { if (confirm('চলমান পরীক্ষা শেষ করে বের হবেন?')) resetExamStart(); });
+  $('back-to-collection-btn').addEventListener('click', () => switchTab('collection'));
+
+  function downloadBackup() {
+    const payload = { app: 'MCQ Question Lab', version: 1, exportedAt: new Date().toISOString(), questions };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `mcq-question-backup-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    showStatus('backup-status', `${questions.length}টি প্রশ্নের JSON ব্যাকআপ তৈরি হয়েছে।`, 'success');
+  }
+  $('export-btn').addEventListener('click', downloadBackup);
+  $('collection-export-btn').addEventListener('click', downloadBackup);
+  $('import-btn').addEventListener('click', () => $('import-file').click());
+  $('import-file').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      const imported = Array.isArray(data) ? data : data.questions;
+      if (!Array.isArray(imported)) throw new Error('ফাইলে প্রশ্নের তালিকা পাওয়া যায়নি।');
+      const valid = imported.filter(isValidQuestion).map(q => ({
+        id: createId(), question: String(q.question),
+        options: q.options.map(o => ({ letter: String(o.letter).toUpperCase(), text: String(o.text) })),
+        correct: String(q.correct).toUpperCase(), explanation: String(q.explanation || ''),
+        subject: typeof q.subject === 'string' && q.subject.trim() ? q.subject : SUBJECT_UNASSIGNED,
+        createdAt: new Date().toISOString()
+      }));
+      const existing = new Set(questions.map(q => `${q.subject || SUBJECT_UNASSIGNED}|${q.question.toLowerCase()}|${q.correct}`));
+      const fresh = valid.filter(q => {
+        const key = `${q.subject}|${q.question.toLowerCase()}|${q.correct}`;
+        if (existing.has(key)) return false;
+        existing.add(key);
+        return true;
+      });
+      questions = [...questions, ...fresh];
+      saveQuestions();
+      showStatus('backup-status', `${fresh.length}টি প্রশ্ন ইমপোর্ট হয়েছে। ${valid.length - fresh.length}টি ডুপ্লিকেট বাদ গেছে।`, 'success');
+    } catch (error) {
+      showStatus('backup-status', `ইমপোর্ট করা যায়নি: ${error.message}`, 'error');
+    }
+    event.target.value = '';
+  });
+
+  $('delete-all-btn').addEventListener('click', () => $('confirm-modal').classList.add('show'));
+  $('cancel-delete-btn').addEventListener('click', () => $('confirm-modal').classList.remove('show'));
+  $('confirm-delete-btn').addEventListener('click', () => {
+    questions = []; saveQuestions(); renderCollection(); resetExamStart(); $('confirm-modal').classList.remove('show');
+  });
+  $('confirm-modal').addEventListener('click', (event) => { if (event.target === $('confirm-modal')) $('confirm-modal').classList.remove('show'); });
+
+  const THEME_KEY = 'mcqQuestionLab.theme.v1';
+  function setTheme(isDark) {
+    document.body.classList.toggle('dark', isDark);
+    const button = $('theme-toggle');
+    if (button) {
+      button.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+      button.setAttribute('aria-pressed', String(isDark));
+      button.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) themeColor.content = isDark ? '#0b1220' : '#101827';
+    try { localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light'); } catch (error) {}
+  }
+  let storedDark = false;
+  try { storedDark = localStorage.getItem(THEME_KEY) === 'dark'; } catch (error) {}
+  setTheme(storedDark);
+  $('theme-toggle').addEventListener('click', () => setTheme(!document.body.classList.contains('dark')));
+
+  updateCounts();
+  renderCollection();
+  resetExamStart();
+})();
+</script>
+</body>
 </html>
